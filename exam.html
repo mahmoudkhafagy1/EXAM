@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Tech - Biochemistry Quiz</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+
+        :root {
+            --dark-bg: #0b0f19;
+            --dark-card: #1a2235;
+            --neon-green: #00ffcc;
+            --neon-blue: #0088ff;
+            --text-light: #e2e8f0;
+            --text-muted: #94a3b8;
+            --correct-bg: rgba(34, 197, 94, 0.2);
+            --correct-border: #22c55e;
+            --wrong-bg: rgba(239, 68, 68, 0.2);
+            --wrong-border: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .ar-text {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .en-text {
+            direction: ltr;
+            text-align: left;
+        }
+
+        .quiz-container {
+            background-color: var(--dark-card);
+            border: 1px solid var(--neon-green);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--neon-green), var(--neon-blue));
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--neon-green), #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .counters {
+            display: flex;
+            gap: 15px;
+            font-weight: bold;
+        }
+
+        .correct-text { color: var(--correct-border); }
+        .wrong-text { color: var(--wrong-border); }
+
+        .question {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: transparent;
+            color: var(--text-light);
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .option-btn.correct {
+            border-color: var(--correct-border);
+            background-color: var(--correct-bg);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+            opacity: 1;
+        }
+
+        .option-btn.wrong {
+            border-color: var(--wrong-border);
+            background-color: var(--wrong-bg);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+            opacity: 1;
+        }
+
+        .rationale {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(0, 136, 255, 0.1);
+            border: 1px solid rgba(0, 136, 255, 0.3);
+            border-radius: 12px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .rationale.show {
+            display: block;
+        }
+
+        .rationale-title {
+            color: #60a5fa;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            display: none; /* مخفي افتراضياً */
+        }
+
+        .nav-btn.show {
+            display: block;
+        }
+
+        #next-btn {
+            background-color: var(--neon-green);
+            color: var(--dark-bg);
+        }
+
+        #next-btn:hover {
+            background-color: #00e6b8;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.6);
+        }
+
+        #prev-btn {
+            background-color: #334155;
+            color: var(--text-light);
+        }
+
+        #prev-btn:hover {
+            background-color: #475569;
+        }
+
+        .result-container {
+            text-align: center;
+            display: none;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container" id="quiz-container">
+        <div class="header-line"></div>
+        <h1>Maze Tech - Biochemistry Exam</h1>
+        
+        <div id="quiz-content">
+            <div class="stats en-text">
+                <span id="question-tracker">Question 1 of 100</span>
+                <div class="counters">
+                    <span id="correct-tracker" class="correct-text">✅ Correct: 0</span>
+                    <span id="wrong-tracker" class="wrong-text">❌ Wrong: 0</span>
+                </div>
+            </div>
+
+            <div class="question en-text" id="question-text"></div>
+            
+            <div class="options en-text" id="options-container"></div>
+
+            <div class="rationale ar-text" id="rationale-container">
+                <div class="rationale-title">💡 الشرح:</div>
+                <div id="rationale-text"></div>
+            </div>
+
+            <div class="nav-buttons en-text">
+                <button class="nav-btn" id="prev-btn" onclick="prevQuestion()">⬅️ Previous</button>
+                <button class="nav-btn" id="next-btn" onclick="nextQuestion()">Next Question ➔</button>
+            </div>
+        </div>
+
+        <div class="result-container" id="result-container">
+            <h2 style="font-size: 32px; margin-bottom: 20px; color: white;">Quiz Completed!</h2>
+            <div style="font-size: 24px; margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; align-items: center;">
+                <p>Final Score: <span id="final-score" style="color: var(--neon-green); font-weight: bold;"></span> / 100</p>
+                <p class="correct-text">✅ Correct: <span id="final-correct"></span></p>
+                <p class="wrong-text">❌ Wrong: <span id="final-wrong"></span></p>
+            </div>
+            <button class="nav-btn show en-text" style="background: transparent; border: 2px solid var(--neon-green); color: var(--neon-green); width: 100%;" onclick="location.reload()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        // جميع الـ 100 سؤال
+        const questions = [
+            // --- Exam 4 ---
+            { q: "1. Which disaccharide contains an a-1,2-glycosidic bond?", o: ["Maltose", "Lactose", "Sucrose", "Cellobiose"], a: 2, r: "السكروز (سكر المائدة) يتكون من جلوكوز وفركتوز مرتبطين برابطة a-1,2." },
+            { q: "2. Which polysaccharide is composed of b-1,4-linked N-acetylglucosamine units?", o: ["Cellulose", "Chitin", "Glycogen", "Amylopectin"], a: 1, r: "الكيتين هو المكون الأساسي للهيكل الخارجي للحشرات ويتكون من هذه الوحدات." },
+            { q: "3. The difference between amylose and amylopectin is that amylopectin contains:", o: ["a-1,6-glycosidic branches", "B-1,4-glycosidic bonds", "N-acetylated amino sugars", "Uronic acid residues"], a: 0, r: "الأميلوبكتين يتميز بوجود تفرعات عبر روابط a-1,6، بينما الأميلوز خطي." },
+            { q: "4. In glycogen, branches occur approximately every:", o: ["4-6 glucose units", "8-12 glucose units", "15-20 glucose units", "25-30 glucose units"], a: 1, r: "الجليكوجين شديد التفرع، حيث يحدث تفرع تقريباً كل 8 إلى 12 وحدة جلوكوز." },
+            { q: "5. Which carbon in fructose becomes the anomeric carbon in the furanose form?", o: ["C-1", "C-2", "C-5", "C-6"], a: 1, r: "الفركتوز هو كيتوز، ومجموعة الكيتون الفعالة توجد على ذرة الكربون الثانية." },
+            { q: "6. Cellulose is indigestible by humans because:", o: ["It contains b-1,4 linkages that human enzymes cannot hydrolyze", "It is too highly branched", "It contains modified sugar residues", "It forms crystalline structures that resist acid hydrolysis"], a: 0, r: "جسم الإنسان لا يمتلك الإنزيمات اللازمة لتكسير الروابط الجليكوسيدية من نوع بيتا 1،4." },
+            { q: "7. Which of the following is a reducing sugar?", o: ["Sucrose", "Trehalose", "Lactose", "Raffinose"], a: 2, r: "اللاكتوز يمتلك ذرة كربون أنوميرية حرة قادرة على الاختزال." },
+            { q: "8. Which amino acid has a sulfhydryl group that can participate in disulfide bonds?", o: ["Methionine", "Cysteine", "Serine", "Threonine"], a: 1, r: "السيستين يحتوي على مجموعة -SH التي تتأكسد لتكوين روابط ثنائي الكبريتيد." },
+            { q: "9. In the Haworth projection of a-D-glucose, the anomeric hydroxyl group is:", o: ["Below the ring plane", "Above the ring plane", "In the ring plane", "Absent"], a: 0, r: "في شكل ألفا لسكر الـ D، تكون مجموعة الـ OH للأسفل." },
+            { q: "10. Which polysaccharide contains both a-1,4 and a-1,6 glycosidic linkages?", o: ["Cellulose", "Amylose", "Amylopectin", "Chitin"], a: 2, r: "الأميلوبكتين يحتوي على سلسلة مستقيمة وتفرعات." },
+            { q: "11. At a pH below its pI, an amino acid will have:", o: ["No charged groups", "A net positive charge", "A net negative charge", "Equal positive and negative charges"], a: 1, r: "في الوسط الحمضي (pH منخفض)، يكتسب الحمض الأميني بروتونات ويصبح موجب الشحنة." },
+            { q: "12. Which amino acid is NOT chiral?", o: ["Alanine", "Glycine", "Valine", "Leucine"], a: 1, r: "الجلايسين غير كيرالي لأن سلسلته الجانبية عبارة عن ذرة هيدروجين فقط." },
+            { q: "13. In a parallel b-sheet, the hydrogen bonds are:", o: ["Perpendicular to the strand direction", "Parallel to the strand direction", "Between adjacent strands running in the same direction", "Between adjacent strands running in opposite directions"], a: 2, r: "في الصفائح المتوازية، تسير السلاسل الببتيدية في نفس الاتجاه وتترابط هيدروجينياً." },
+            { q: "14. Which property is common to all standard amino acids?", o: ["They are all L-isomers", "They have a charged side chain at pH 7", "They have both amino and carboxyl groups", "They are all hydrophobic"], a: 2, r: "التعريف الأساسي للحمض الأميني هو احتوائه على مجموعة أمين ومجموعة كربوكسيل." },
+            { q: "15. The reducing end of a polysaccharide:", o: ["Has a free anomeric carbon", "Is always the non-reducing end", "Is involved in all glycosidic bonds", "Cannot undergo mutarotation"], a: 0, r: "النهاية المختزلة تتطلب كربون أنوميري غير مرتبط لفتح الحلقة." },
+
+            // --- Exam 3 ---
+            { q: "16. Which carbon atom becomes the anomeric carbon in the cyclization of glucose?", o: ["C-1", "C-2", "C-5", "C-6"], a: 0, r: "الجلوكوز ألدوز، لذا الكربون الأول (مجموعة الألديهيد) هو الذي يشكل الكربون الأنوميري." },
+            { q: "17. In the Fischer projection of a D-sugar, the hydroxyl group on the highest numbered chiral carbon points:", o: ["To the left", "To the right", "Upward", "Downward"], a: 1, r: "سكريات الـ D تتميز بتوجيه مجموعة OH يميناً على أبعد ذرة كربون كيرالية." },
+            { q: "18. Which of the following is an epimeric pair?", o: ["Glucose and galactose", "Glucose and fructose", "Ribose and ribulose", "Maltose and lactose"], a: 0, r: "الجلوكوز والجالاكتوز يختلفان فقط في الترتيب حول ذرة الكربون رقم 4." },
+            { q: "19. The a and b forms of a sugar in solution undergo interconversion through a process called:", o: ["Tautomerization", "Mutarotation", "Epimerization", "Isomerization"], a: 1, r: "التبديل التلقائي بين ألفا وبيتا في المحلول يسمى الدوران المتبدل (Mutarotation)." },
+            { q: "20. In the Haworth projection of B-D-glucopyranose, the anomeric hydroxyl group is:", o: ["Below the ring plane on C-1", "Above the ring plane on C-1", "Below the ring plane on C-2", "Above the ring plane on C-2"], a: 1, r: "في شكل بيتا، مجموعة الـ OH تكون موجهة للأعلى على الكربون الأول." },
+            { q: "21. Which of the following best describes the anomeric carbon in carbohydrates?", o: ["The carbon involved in glycosidic bond formation", "The carbon that becomes chiral when the ring forms", "The carbon farthest from the carbonyl group", "The carbon that determines D or L configuration"], a: 1, r: "الكربون الأنوميري هو الكربون الذي يتحول لمركز كيرالي جديد عند إغلاق الحلقة." },
+            { q: "22. In protein structure, the a-helix is primarily stabilized by:", o: ["Disulfide bonds", "Hydrophobic interactions", "Hydrogen bonds parallel to the helix axis", "Hydrogen bonds perpendicular to the helix axis"], a: 2, r: "حلزون ألفا يستقر بروابط هيدروجينية تكون موازية لمحور الحلزون." },
+            { q: "23. The isoelectric point (pI) of an amino acid is the pH where:", o: ["The amino acid has maximum buffering capacity", "The amino acid is fully protonated", "The net charge is zero", "The amino acid is fully deprotonated"], a: 2, r: "نقطة التعادل الكهربي هي النقطة التي تتساوى فيها الشحنات لتصبح الشحنة الكلية صفراً." },
+            { q: "24. The B-pleated sheet in proteins is characterized by:", o: ["Hydrogen bonds within the same polypeptide chain", "Hydrogen bonds between adjacent polypeptide chains", "Extensive proline content", "Tight coiling with side chains pointing inward"], a: 1, r: "صفائح بيتا تتكون من روابط هيدروجينية بين سلاسل ببتيدية متجاورة." },
+            { q: "25. Which amino acid side chain can form disulfide bonds?", o: ["Methionine", "Cysteine", "Serine", "Threonine"], a: 1, r: "السيستين هو الذي يمتلك مجموعة سلفهيدريل حرة." },
+            { q: "26. In the Fischer projection of a D-sugar, the hydroxyl group on the chiral carbon farthest from the carbonyl group points:", o: ["To the left", "To the right", "Up", "Down"], a: 1, r: "هذا هو المعيار الكيميائي لتحديد السكر من النوع D." },
+            { q: "27. Which polysaccharide is composed exclusively of glucose units linked by b-1,4 glycosidic bonds?", o: ["Cellulose", "Amylose", "Amylopectin", "Glycogen"], a: 0, r: "السليلوز يتكون بالكامل من روابط بيتا 1،4." },
+            { q: "28. At physiological pH (7.4), most amino acids exist as:", o: ["Cations", "Anions", "Zwitterions", "Neutral molecules"], a: 2, r: "في هذا الـ pH، تمتلك الأحماض الأمينية شحنة موجبة وسالبة معاً (زويتريون)." },
+            { q: "29. Which amino acid has an imino group rather than an amino group?", o: ["Lysine", "Proline", "Histidine", "Tryptophan"], a: 1, r: "البرولين يتميز بأن سلسلته الجانبية تتصل بمجموعة الأمين لتكوين حلقة إيمينو." },
+            { q: "30. In cellulose, glucose units are linked by:", o: ["a-1,4 glycosidic bonds", "b-1,4 glycosidic bonds", "a-1,6 glycosidic bonds", "b-1,6 glycosidic bonds"], a: 1, r: "السليلوز يتميز بروابط بيتا 1،4 القوية." },
+
+            // --- Exam 2 ---
+            { q: "31. The most important function of protein in our body is:", o: ["Thermal insulation", "Storage", "Catalysis", "Energy production"], a: 2, r: "البروتينات تعمل كإنزيمات محفزة لجميع العمليات الحيوية (Catalysis)." },
+            { q: "32. The following is a disaccharide and non-reducing sugar:", o: ["Lactose", "Fructose", "Maltose", "Sucrose"], a: 3, r: "السكروز سكر ثنائي غير مختزل لعدم وجود كربون أنوميري حر." },
+            { q: "33. All the following are composed exclusively of glucose, except:", o: ["Glycogen", "Starch", "Lactose", "Maltose"], a: 2, r: "اللاكتوز يتكون من جلوكوز وجالاكتوز." },
+            { q: "34. The carbohydrate serves as an anticoagulant:", o: ["Sucrose", "Heparin", "Arabinose", "Maltose"], a: 1, r: "الهيبارين يستخدم في الطب لمنع تجلط الدم." },
+            { q: "35. Which of the following glycosaminoglycans is unsulfated?", o: ["Chondroitin sulfate", "Heparin", "Hyaluronic acid", "Keratan sulfate"], a: 2, r: "حمض الهيالورونيك هو الجليكوزامينوجليكان الوحيد غير المكوبرت (Unsulfated)." },
+            { q: "36. Glucose on oxidation gives which of the following except:", o: ["Mucic acid", "Glucaric acid", "Gluconic acid", "Glucuronic acid"], a: 0, r: "حمض الميوسيك ينتج عن أكسدة الجالاكتوز، وليس الجلوكوز." },
+            { q: "37. Synovial fluid contains which of the following GAGS:", o: ["Heparin", "Hyaluronic acid", "Chondroitin sulfate", "Keratin sulfate"], a: 1, r: "حمض الهيالورونيك يعمل كمشحم طبيعي وممتص للصدمات في مفاصل العظام." },
+            { q: "38. The precursor for vitamin D is:", o: ["Cholesterol", "Arachidonic acid", "Triacylglycerol", "Phospholipids"], a: 0, r: "الكوليسترول هو المركب الأساسي لبناء فيتامين د في الجسم." },
+            { q: "39. All of the following are sphingolipids, except:", o: ["Sphingomyelin", "Cerebroside", "Phosphatidylinositol", "Ganglioside"], a: 2, r: "الفوسفاتيديل إينوزيتول هو جليسروليبيد يعتمد على الجليسرول وليس السفينجوزين." },
+            { q: "40. Which of the following comprise an important part of lung surfactant?", o: ["Lecithin", "Cephalins", "Cholesterol", "Plasmalogens"], a: 0, r: "الليسيثين (DPPC) يقلل التوتر السطحي في الحويصلات الهوائية بالرئة." },
+            { q: "41. In which of the following amino acid imidazole ring is present?", o: ["Histidine", "Alanine", "Tryptophan", "Valine"], a: 0, r: "الهيستيدين يحتوي على حلقة الإيميدازول الفريدة في سلسلته الجانبية." },
+            { q: "42. The pH at which the molecule act as Zwitterion is called as:", o: ["Isoelectric pH", "Isoelectric focusing", "Optimum pH", "Neutral pH"], a: 0, r: "هذا الـ pH يعرف بنقطة التعادل الكهربي (pI)." },
+            { q: "43. Which of the following amino acids is hydroxy amino acid?", o: ["Serine", "Isoleucine", "Leucine", "All of the above"], a: 0, r: "السيرين يحتوي على مجموعة هيدروكسيل (-OH)." },
+            { q: "44. Transaminase enzymes belong to the class:", o: ["Hydrolases", "Transferases", "Oxidoreductases", "Isomerases"], a: 1, r: "إنزيمات نقل الأمين تقوم بنقل مجموعات كيميائية، لذا تنتمي للناقلات." },
+            { q: "45. Velocity at Km is:", o: ["Half the Vmax", "Half the substrate concentration", "Same as Vmax", "Quarter the Vmax"], a: 0, r: "ثابت ميكائيليس (Km) يمثل تركيز الركيزة الذي يحقق نصف السرعة القصوى (Vmax/2)." },
+            { q: "46. The following amino acids contain two carboxylic groups:", o: ["Aspartate and Glutamate", "Asparagines and Glutamine", "Glutamine and Aspartate", "Proline and Glutamate"], a: 0, r: "الأسبرتات والجلوتامات هما الأحماض الأمينية الحمضية." },
+            { q: "47. The alpha helix in a protein:", o: ["Refers to its tertiary structure", "Is stabilized by covalent bonds", "Refers to its secondary structure", "Is the quaternary structure"], a: 2, r: "حلزون ألفا هو أحد الأنماط الرئيسية للبنية الثانوية للبروتين." },
+            { q: "48. Denaturation of a protein:", o: ["Disrupts the primary structure", "Alters the secondary and tertiary structures", "Breaks all covalent bonds", "Has no effect on biological activity"], a: 1, r: "التمسخ يدمر البنية ثلاثية الأبعاد دون كسر الروابط الببتيدية (البنية الأولية)." },
+            { q: "49. The repeating unit in hyaluronic acid is:", o: ["Glucuronic acid and galactose", "Glucuronic acid and galactosamine", "Glucuronic acid and glucosamine", "Glucuronic acid and N-acetyl glucosamine", "Glucuronic acid and N-acetyl galactosamine"], a: 3, r: "هذه هي الوحدات البنائية الدقيقة لحمض الهيالورونيك." },
+            { q: "50. Triglycerides are:", o: ["Esters of higher fatty acids with acetyl alcohol", "Esters of fatty with cholesterol", "Esters of stearic acid with retinol", "Esters of fatty acids with glycerol"], a: 3, r: "الدهون الثلاثية (Triacylglycerols) تتكون من جليسرول مرتبط بثلاثة أحماض دهنية." },
+
+            // --- Midterm ---
+            { q: "51. Glucose and galactose are epimers. This means that:", o: ["They differ only in C-2", "They differ only in C-4", "They are mirror images", "One is pyranose and the other is furanose"], a: 1, r: "الإبيمرية تعني الاختلاف حول ذرة كربون واحدة، وهنا هي ذرة الكربون الرابعة." },
+            { q: "52. In ________ inhibition, the inhibitor is an end product of the enzyme action", o: ["Allosteric", "Non-competitive", "Feed back", "Competitive"], a: 2, r: "هذه العملية تسمى التغذية الراجعة التثبيطية (Feedback inhibition)." },
+            { q: "53. Which is the repeating unit of hyaluronic acid?", o: ["N-Acetylgalactosamine and D-glucosamine", "N-Acetylglucosamine and D-glucuronic acid", "N-Acetylgalactosamine and D-glucuronic acid", "N-Acetylglucosamine and D-glucosamine"], a: 1, r: "السؤال متكرر بصيغة أخرى، الإجابة هي الجلوكورونيك أسيد و N-acetylglucosamine." },
+            { q: "54. Digestive enzymes belong to the class of:", o: ["Lyases", "Ligases", "Hydrolases", "Oxidoreductases"], a: 2, r: "الإنزيمات الهاضمة تكسر الجزيئات بإضافة الماء (Hydrolases)." },
+            { q: "55. Sphingomyelin on hydrolysis yields all the following, EXCEPT:", o: ["Choline", "Phosphate", "Sphingosine", "Glucose"], a: 3, r: "السفينجوميالين هو فوسفوليبيد ولا يحتوي على سكريات مثل الجلوكوز." },
+            { q: "56. Lipid give less energy than carbohydrate", o: ["True", "False"], a: 1, r: "خطأ. الدهون تعطي 9 سعرات حرارية لكل جرام، بينما الكربوهيدرات تعطي 4 فقط." },
+            { q: "57. All the following are monosaccharides except:", o: ["Ribose", "Maltose", "Glucose", "Mannose"], a: 1, r: "المالتوز هو سكر ثنائي يتكون من وحدتي جلوكوز." },
+            { q: "58. Cholesterol is an:", o: ["Derived lipid", "Aliphatic alcohol", "Compound lipid", "Simple lipid"], a: 0, r: "الكوليسترول يعتبر من الليبيدات المشتقة (Derived lipids)." },
+            { q: "59. glycolipid composed of glycerol with phosphate and galactose", o: ["True", "False"], a: 1, r: "خطأ. الليبيدات السكرية لا تحتوي عادة على مجموعة فوسفات." },
+            { q: "60. Which of the following are Aldohexoses?", o: ["Ribose, fructose and erythrose", "Fructose, ribose, and ribulose", "Lactose, sucrose, and maltose", "Glucose, mannose, and galactose"], a: 3, r: "هذه السكريات الثلاثة عبارة عن سكريات أحادية ألديهيدية سداسية الكربون." },
+            { q: "61. In a competitive inhibition, Km is increased and Vmax is increased", o: ["True", "False"], a: 1, r: "خطأ. في التثبيط التنافسي، يزداد الـ Km لكن السرعة القصوى Vmax تظل ثابتة." },
+            { q: "62. The sugar found in milk is:", o: ["Fructose", "Lactose", "Galactose", "Glucose"], a: 1, r: "اللاكتوز معروف بسكر الحليب." },
+            { q: "63. Glycogen contains a 1,4 and a 1,6 glycosidic linkages", o: ["True", "False"], a: 0, r: "صحيح، الجليكوجين يحتوي على روابط ألفا 1،4 للسلسلة وألفا 1،6 للتفرعات." },
+            { q: "64. Which of the following sugars is found in RNA?", o: ["2-Deoxy-D-ribose", "Ribose", "Fructose", "Ribulose"], a: 1, r: "الرايبوز هو السكر الخماسي الموجود في الحمض النووي الريبوزي RNA." },
+            { q: "65. An example for simple lipid is:", o: ["Fatty acids", "Triglyceride (Triacylglycerol)", "Glycerol", "Cephalin"], a: 1, r: "الدهون الثلاثية (الزيوت والدهون) تعتبر ليبيدات بسيطة." },
+            { q: "66. Sucrose is known as Table sugar", o: ["True", "False"], a: 0, r: "صحيح، السكروز هو الاسم العلمي لسكر المائدة." },
+            { q: "67. Which one of the following is an acidic amino acid?", o: ["Aspartic acid", "Lysine", "Palmitic acid", "Pyruvic acid"], a: 0, r: "حمض الأسبارتيك هو حمض أميني حمضي." },
+            { q: "68. apoenzyme is protein part of enzyme", o: ["True", "False"], a: 0, r: "صحيح، الأبوإنزيم هو الجزء البروتيني للإنزيم قبل أن يرتبط بالعامل المساعد." },
+            { q: "69. The glycosidic linkage seen in sucrose is", o: ["Alpha 1-2 linkage", "Alpha 1-6 linkage", "Alpha linkage", "Beta 1-4 linkage"], a: 0, r: "الجلوكوز يرتبط بالفركتوز في السكروز برابطة ألفا 1-2." },
+            { q: "70. Which heteropolysaccharide is an anticoagulant?", o: ["Hyaluronic acid", "Heparin", "Dermatan sulphate", "Keratan sulphate"], a: 1, r: "الهيبارين يمنع تخثر الدم." },
+
+            // --- Exam 1 ---
+            { q: "71. The powerhouse of the cell is", o: ["Nucleus", "Cell membrane", "Mitochondria", "Lysosomes"], a: 2, r: "الميتوكوندريا هي المسؤولة عن إنتاج الطاقة (ATP) في الخلية." },
+            { q: "72. The opposite protein structure indicates: (Assuming typical diagram)", o: ["Antiparallel B-sheets", "Chaperons", "Parallel B-sheets", "Helix structure"], a: 0, r: "في غياب الصورة، الإجابة المعتمدة في هذا السؤال بالامتحان هي الصفائح بيتا المتضادة." },
+            { q: "73. Lipids are important in the human body because they act as:", o: ["Immune molecules", "Lubricants", "Stored genetic information", "Energy source"], a: 3, r: "الدهون هي المصدر الأكبر لتخزين الطاقة في الجسم." },
+            { q: "74. Which of the following are examples of globular proteins?", o: ["Insulin and hemoglobin", "Hemoglobin and keratin", "Collagen and hemoglobin", "Collagen and elastin"], a: 0, r: "الإنسولين والهيموجلوبين أمثلة على البروتينات الكروية الذائبة." },
+            { q: "75. Sphingomyelins:", o: ["Consist of phosphoric acid, choline and ceramide", "Consist of ceramide, sphingosine and choline", "Are glycosphingolipids", "Are part of the skin pigment melanin"], a: 0, r: "هذا هو التركيب الكيميائي الدقيق للسفينجوميالين." },
+            { q: "76. All the following about classification of fatty acids is true except:", o: ["Saturated fatty acids do not contain double bonds.", "Poly-unsaturated fatty acids contain more than one double bond.", "Essential fatty acids are synthesized in the body.", "According to structure, triacylglycerol is simple and complex."], a: 2, r: "الأحماض الدهنية الأساسية لا يمكن تصنيعها في الجسم ويجب تناولها في الغذاء." },
+            { q: "77. A sugar alcohol is", o: ["Mannitol", "Trehalose", "Xylulose", "Arabinose"], a: 0, r: "المانيتول هو كحول سكري (Polyol) ينتج عن اختزال المانوز." },
+            { q: "78. Invert sugar is", o: ["Lactose", "Sucrose", "Hydrolytic products of sucrose", "Fructose"], a: 2, r: "السكر المحول (Invert sugar) هو مزيج الجلوكوز والفركتوز الناتج عن تكسير السكروز." },
+            { q: "79. The sugar found in DNA is", o: ["Xylose", "Ribose", "Deoxyribose", "Ribulose"], a: 2, r: "الـ DNA يحتوي على سكر منقوص الأكسجين (Deoxyribose)." },
+            { q: "80. Glucose on oxidation does not give.", o: ["Glycoside", "Glucosaccharic acid", "Gluconic acid", "Glucuronic acid"], a: 0, r: "الجليكوسيد ليس حمضاً ناتجاً عن الأكسدة، بل رابطة مع جزيء آخر." },
+            { q: "81. A heteropolysaccharide among the following is", o: ["Inulin", "Cellulose", "Heparin", "Dextrin"], a: 2, r: "الهيبارين يتكون من وحدات سكرية مختلفة، فهو غير متجانس." },
+            { q: "82. N-Acetylglucosamine is present in", o: ["Hyaluronic acid", "Chondroitin sulphate", "Heparin", "All of these"], a: 0, r: "حمض الهيالورونيك يحتوي بشكل أساسي على هذه الوحدة (بالإضافة للجلوكورونيك)." },
+            { q: "83. The optically inactive amino acid is", o: ["Glycine", "Serine", "Threonine", "Valine"], a: 0, r: "الجلايسين غير نشط ضوئياً لأنه الحمض الأميني الوحيد الذي لا يمتلك كربون كيرالي." },
+            { q: "84. An aromatic amino acid is", o: ["Lysine", "Tyrosine", "Glutamic acid", "Arginine"], a: 1, r: "التيروزين يحتوي على حلقة عطرية (حلقة فينول)." },
+            { q: "85. The illustrated disaccharide is (Assuming general non-reducing)", o: ["Maltose", "Sucrose", "Isomaltose", "Lactose"], a: 1, r: "السكروز هو السكر الثنائي المعتاد ذكره في هذه النماذج كصورة لسكر غير مختزل." },
+            { q: "86. In proteins the a-helix and B-pleated sheet are examples of", o: ["Primary structure", "Secondary structure", "Tertiary structure", "Quaternary structure"], a: 1, r: "حلزون ألفا وصفيحة بيتا يمثلان البنية الثانوية للبروتين." },
+            { q: "87. An -OH group is present in the side chain of", o: ["Serine", "Arginine", "Lysine", "Proline"], a: 0, r: "السيرين يحتوي على مجموعة هيدروكسيل." },
+            { q: "88. Zymogen is", o: ["An intracellular enzyme", "Serum enzyme", "A complete extracellular enzyme", "An inactivated enzyme"], a: 3, r: "الزايموجين (أو البروإنزيم) هو الشكل الأولي غير النشط للإنزيم." },
+            { q: "89. Which among the following is a basic amino acid?", o: ["Asparagine", "Arginine", "Proline", "Alanine"], a: 1, r: "الأرجنين من الأحماض الأمينية القاعدية لاحتوائه على مجموعة الجوانيدين." },
+            { q: "90. Sulphur-containing amino acid is", o: ["Glutathione", "Chondroitin sulphate", "Homocysteine", "Tryptophan"], a: 2, r: "الهوموسيستين (ومعه السيستين والميثيونين) من الأحماض الأمينية التي تحتوي على الكبريت." },
+            { q: "91. Lecithins are composed of", o: ["Glycerol + Fatty acids + Phosphoric acid + Choline", "Glycerol + Fatty acids + Phosphoric acid + Ethanolamine", "Glycerol + Fatty acids + Phosphoric acid + Serine", "Glycerol + FA + Phos. acid + inistol"], a: 0, r: "الاسم العلمي لليسيثين هو فوسفاتيديل كولين." },
+            { q: "92. Coenzymes are", o: ["non protein organic molecules", "Soluble, colloidal, protein molecules", "Structural analogue of enzymes", "Different forms of enzymes"], a: 0, r: "الإنزيمات المساعدة هي جزيئات عضوية غير بروتينية ضرورية لعمل الإنزيم." },
+            { q: "93. The Michaelis constant, Km is", o: ["Numerically equal to 1/2 Vmax", "Dependent on enzyme conc.", "Independent of pH", "Numerically equal to the substrate concentration that gives half maximal velocity"], a: 3, r: "هذا هو التعريف العلمي الدقيق لقيمة Km." },
+            { q: "94. Enzymes increase the rate of reactions by", o: ["Increasing free energy", "Decreasing the energy of activation", "Changing equilibrium", "Increasing free energy change"], a: 1, r: "الإنزيمات تسرع التفاعلات عن طريق تقليل حاجز طاقة التنشيط." },
+            { q: "95. Which of the following is a ketohexose (ketone-containing hexose)?", o: ["Ribose", "Fructose", "Glucose", "Erythrulose"], a: 1, r: "الفركتوز سكر سداسي الكربون يحتوي على مجموعة كيتون." },
+            { q: "96. Which of the following is C4 epimer of glucose?", o: ["Mannose", "Fructose", "Galactose", "Sorbose"], a: 2, r: "الجالاكتوز يختلف عن الجلوكوز فقط عند ذرة الكربون رقم 4." },
+            { q: "97. Glycoconjugates consist of carbohydrates non-covalently bound with protein or lipid.", o: ["True", "False"], a: 1, r: "خطأ. الجلايكوكونجوجيتس ترتبط فيها الكربوهيدرات بروابط تساهمية (Covalently) وليس غير تساهمية." },
+            { q: "98. _______ is glycosaminoglycan present in horny structures formed from dead cells like hair and nails.", o: ["Chondroitin sulfate", "Dermatan sulfate", "Keratan sulfate", "Heparan sulfate"], a: 2, r: "الكراتان سلفات يتواجد في الشعر والأظافر والقرنية." },
+            { q: "99. The nonbranching helical structure of starch is called", o: ["Amylose", "Dextrin", "Amylopectin", "Amino sugars"], a: 0, r: "الأميلوز هو الجزء الخطي غير المتفرع من النشا." },
+            { q: "100. The illustrated structure of figure is for (Assuming pentose without C2-OH)", o: ["Fructose", "Deoxyribose", "Ribose", "Glucose"], a: 1, r: "في الصورة المرفقة بالامتحان، ديوكسي رايبوز يفتقر لمجموعة الأكسجين (OH) عند ذرة الكربون الثانية." }
+        ];
+
+        let currentQuestion = 0;
+        // مصفوفة لحفظ إجابات المستخدم علشان يقدر يرجع ليها (null يعني لسه مجاوبش)
+        let userAnswers = new Array(questions.length).fill(null);
+
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const rationaleContainer = document.getElementById('rationale-container');
+        const rationaleText = document.getElementById('rationale-text');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const questionTracker = document.getElementById('question-tracker');
+        const correctTracker = document.getElementById('correct-tracker');
+        const wrongTracker = document.getElementById('wrong-tracker');
+        const quizContent = document.getElementById('quiz-content');
+        const resultContainer = document.getElementById('result-container');
+        const finalScore = document.getElementById('final-score');
+        const finalCorrect = document.getElementById('final-correct');
+        const finalWrong = document.getElementById('final-wrong');
+
+        function updateStats() {
+            let correct = 0;
+            let wrong = 0;
+            
+            for(let i = 0; i < questions.length; i++) {
+                if(userAnswers[i] !== null) {
+                    if(userAnswers[i] === questions[i].a) {
+                        correct++;
+                    } else {
+                        wrong++;
+                    }
+                }
+            }
+            
+            correctTracker.textContent = `✅ Correct: ${correct}`;
+            wrongTracker.textContent = `❌ Wrong: ${wrong}`;
+            return { correct, wrong };
+        }
+
+        function loadQuestion() {
+            rationaleContainer.classList.remove('show');
+            optionsContainer.innerHTML = '';
+            
+            questionTracker.textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+            updateStats();
+            
+            const q = questions[currentQuestion];
+            questionText.textContent = q.q;
+
+            // إظهار أو إخفاء زر الرجوع
+            if(currentQuestion > 0) {
+                prevBtn.classList.add('show');
+            } else {
+                prevBtn.classList.remove('show');
+            }
+
+            // لو في آخر سؤال، نغير كلمة الزرار
+            if (currentQuestion === questions.length - 1) {
+                nextBtn.textContent = 'Show Results ➔';
+            } else {
+                nextBtn.textContent = 'Next Question ➔';
+            }
+
+            // رسم خيارات الإجابة
+            q.o.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                
+                // لو كان اليوزر مجاوب السؤال ده قبل كده
+                if(userAnswers[currentQuestion] !== null) {
+                    btn.disabled = true;
+                    // تلوين الإجابات
+                    if(index === q.a) {
+                        btn.classList.add('correct');
+                    } else if (index === userAnswers[currentQuestion]) {
+                        btn.classList.add('wrong');
+                    }
+                } else {
+                    btn.onclick = () => checkAnswer(index, btn);
+                }
+                
+                optionsContainer.appendChild(btn);
+            });
+
+            // لو السؤال متجاوب، نعرض الشرح وزرار النكست
+            if(userAnswers[currentQuestion] !== null) {
+                rationaleText.textContent = q.r;
+                rationaleContainer.classList.add('show');
+                nextBtn.classList.add('show');
+            } else {
+                nextBtn.classList.remove('show');
+            }
+        }
+
+        function checkAnswer(selectedIndex, btnElement) {
+            // حفظ إجابة اليوزر
+            userAnswers[currentQuestion] = selectedIndex;
+            
+            const q = questions[currentQuestion];
+            const allBtns = optionsContainer.querySelectorAll('.option-btn');
+            
+            // قفل كل الزراير
+            allBtns.forEach(btn => btn.disabled = true);
+
+            // إظهار النتيجة على الزراير
+            if (selectedIndex === q.a) {
+                btnElement.classList.add('correct');
+            } else {
+                btnElement.classList.add('wrong');
+                allBtns[q.a].classList.add('correct');
+            }
+
+            // تحديث العدادات وعرض الشرح
+            updateStats();
+            rationaleText.textContent = q.r;
+            rationaleContainer.classList.add('show');
+            nextBtn.classList.add('show');
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizContent.style.display = 'none';
+            resultContainer.classList.add('show');
+            
+            const stats = updateStats();
+            finalScore.textContent = stats.correct;
+            finalCorrect.textContent = stats.correct;
+            finalWrong.textContent = stats.wrong;
+        }
+
+        // تشغيل الـ Quiz
+        loadQuestion();
+    </script>
+</body>
+</html>
